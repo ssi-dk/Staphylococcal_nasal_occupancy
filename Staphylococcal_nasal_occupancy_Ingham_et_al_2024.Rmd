@@ -39,6 +39,11 @@ library(kableExtra)
 #library(apeglm)
 library(corrplot)
 library(viridis)
+library(rcompanion)
+library(vcdExtra)
+library(ggbeeswarm)
+library(treemap)
+library(ggdendro)
 ```
 
 
@@ -90,6 +95,8 @@ species_summary %>% kable() %>% kable_classic()
 sCST_colors <- c("sCST1Sa_H" = "#e68502", "sCST1Sa_M" = "#f2ad00", "sCST2Sa" = "#fad77b", "sCST2Sc_H" = "#644b63", "sCST2Sl" = "#a7bf90" , "sCST2Sh" = "#385338", "sCST2Sc" = "#ac8cae", "sCST2Se" = "#82a1c1")
 
 sCST_colors2 <- c("High aureus" = "#e68502", "Mid aureus" = "#f2ad00", "Low aureus" = "#fad77b", "High capitis" = "#644b63", "Lugdunensis" = "#a7bf90", "Mixed" = "#385338", "Low capitis" = "#ac8cae", "Epidermidis" = "#82a1c1")
+
+sCST_colors3 <- c("sCST1Sa_H (n=175)" = "#e68502", "sCST1Sa_M (n=238)" = "#f2ad00", "sCST2Sa (n=180)" = "#fad77b", "sCST2Sc_H (n=61)" = "#644b63", "sCST2Sl (n=143)" = "#a7bf90" , "sCST2Sh (n=339)" = "#385338", "sCST2Sc (n=136)" = "#ac8cae", "sCST2Se (n=591)" = "#82a1c1")
 
 CST_colors <- c("CST1a" = "#e68502", "CST1b" = "#f2ad00", "CST2" = "#713030", "CST3" = "#82a1c1", "CST4" = "#d4a1b2", "CST5a" = "#aa4365", "CST5b" = "#cd6677", "CST6a"= "#636363", "CST6b" = "#3b3b3b","CST7" = "#66283C", "CST8" = "#494978", "CST9a"= "#018855", "CST9b" = "#7ab898")
 
@@ -220,34 +227,19 @@ population_diversity_CS
 
 ### Test alpha diversity measures between DK and GER (Kruskal Wallis tests), cross-sectional data only  
 ```{r}
-count_diversity_CS %>% summarise(p_Richness = kruskal.test(Richness~population)$p.value, 
+count_diversity_CS %>% dplyr::summarise(p_Richness = kruskal.test(Richness~population)$p.value, 
                     p_Shannon = kruskal.test(Shannon~population)$p.value,
                     p_InvSimpson = kruskal.test(`Inverse Simpson`~ population)$p.value)
 ```
 
 
-# Combine plot (D will be added later)
-```{r fig.height=8, fig.width=10}
-first_row <-   
+# Combine plot 
+```{r fig.height=4, fig.width=10}
+population_grid2_CS20 <-   
   plot_grid(population_nmds_CS, population_diversity_CS,labels = c("A", "B"),label_size = 18,  nrow = 1,rel_widths = c(1,1.35))
-
-second_row <-   
- plot_grid(frequency_plot,NULL,labels = c("C","D"),label_size = 18,
- nrow = 1, rel_widths = c(1,1))
-
-population_grid2_CS20 <- plot_grid(first_row, second_row, 
-          ncol = 1,  rel_heights = c(1,1.74))
 
 population_grid2_CS20
 ```
-
-
-
-Save figure
-```{r}
-#save_plot("output/Figure2.pdf", population_grid2_CS20, ncol = 2, nrow = 2.4)
-```
-
 
 
 
@@ -260,9 +252,9 @@ df_aureus <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>%
 
 ```{r}
 prev_table <- df_aureus %>% group_by(population) %>% 
-  summarise(S.aureus_absent_n = matrixStats::count(Staphylococcus_aureus == 0) , S.aureus_present_n= matrixStats::count(Staphylococcus_aureus>0)) %>% 
+  dplyr::summarise(S.aureus_absent_n = matrixStats::count(Staphylococcus_aureus == 0) , S.aureus_present_n= matrixStats::count(Staphylococcus_aureus>0)) %>% 
  group_by(population)  %>% 
-  summarise("S.aureus_present >0%" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
+  dplyr::summarise("S.aureus_present >0%" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
             "S.aureus_absent (0%)" = paste0(S.aureus_absent_n, " (", round(S.aureus_absent_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)")) 
 
 prev_table %>%
@@ -271,19 +263,31 @@ prev_table %>%
 
 ```{r}
 prev_table10 <- df_aureus %>% group_by(population) %>% 
-  summarise(S.aureus_absent_n = matrixStats::count(Staphylococcus_aureus <10) , S.aureus_present_n= matrixStats::count(Staphylococcus_aureus>=10)) %>% 
+  dplyr::summarise(S.aureus_absent_n = matrixStats::count(Staphylococcus_aureus <10) , S.aureus_present_n= matrixStats::count(Staphylococcus_aureus>=10)) %>% 
  group_by(population)  %>% 
-  summarise("S.aureus_present >=10%" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
+  dplyr::summarise("S.aureus_present >=10%" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
             "S.aureus_absent (<10%)" = paste0(S.aureus_absent_n, " (", round(S.aureus_absent_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)")) 
 
 prev_table10 %>%
   kable() %>% kable_classic()
 ```
 
+Which abundance would be required to detect 43% of samples as positive? (corresponding to culture-positive prevalence) 
+```{r}
+prev_table04 <- df_aureus %>% group_by(population) %>% 
+    dplyr::summarise(S.aureus_absent_n = matrixStats::count(Staphylococcus_aureus <0.4) , S.aureus_present_n= matrixStats::count(Staphylococcus_aureus>=0.4)) %>% 
+    group_by(population)  %>% 
+   dplyr::summarise("S.aureus_present >=10%" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
+            "S.aureus_absent (<10%)" = paste0(S.aureus_absent_n, " (", round(S.aureus_absent_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)")) 
+
+prev_table04 %>%
+  kable() %>% kable_classic()
+```
+
 ```{r}
 df_aureus2 <- as.data.frame(t(count_table[,colnames(count_table) %in% df_aureus$Sample])) %>% select(-Staphylococcus_aureus) %>%
   rownames_to_column("Sample") %>% 
-  rowwise(Sample) %>%  summarise(Other_Staph=sum(c_across(where(is.numeric))))  %>% 
+  rowwise(Sample) %>%  dplyr::summarise(Other_Staph=sum(c_across(where(is.numeric))))  %>% 
   left_join(df_aureus) %>% 
   mutate(Staph_aureus = Staphylococcus_aureus) %>% 
   pivot_longer(cols= c(Other_Staph, Staphylococcus_aureus))
@@ -298,8 +302,8 @@ GER <- ggplot(df_aureus2_GER, aes(x=Sample, y=value, fill=name)) +
 geom_bar(position = "stack", stat = "identity", width = 1) +
 scale_fill_manual(values=c("grey", "#1f78b4"), labels=c("Other staphylococci", "S. aureus")) +
 scale_x_discrete(limits=df_aureus2_GER$Sample) +
-theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = c(0.1, 0.75), legend.title = element_blank()) + 
-labs(y = "Relative abundance [%]") + ggtitle("Germany") + 
+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = c(0.1, 0.75), legend.title = element_blank()) + 
+labs(y = "Relative abundance [%]", x = "Study participants") + ggtitle("Germany") + 
 geom_hline(yintercept = 10, color="red", size=0.5) + 
 geom_vline(xintercept = df_aureus2_GER$Sample[df_aureus2_GER$Staph_aureus >0][1], size=0.5) + 
 geom_vline(xintercept = df_aureus2_GER$Sample[df_aureus2_GER$Staph_aureus >=10][1], size=0.5) + 
@@ -312,8 +316,8 @@ DK <- ggplot(df_aureus2_DK, aes(x=Sample, y=value, fill=name)) +
 geom_bar(position = "stack", stat = "identity", width = 1) +
 scale_fill_manual(values=c("grey", "#1f78b4")) +
 scale_x_discrete(limits=df_aureus2_DK$Sample) +  
-theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") + 
-labs(y = "Relative abundance [%]") + ggtitle("Denmark")+ 
+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") + 
+labs(y = "Relative abundance [%]", x = "Study participants") + ggtitle("Denmark")+ 
 geom_hline(yintercept = 10, color="red", size=0.5)+ 
 geom_vline(xintercept = df_aureus2_DK$Sample[df_aureus2_DK$Staph_aureus >0][1], size=0.5) + 
 geom_vline(xintercept = df_aureus2_DK$Sample[df_aureus2_DK$Staph_aureus >=10][1], size=0.5) + 
@@ -325,14 +329,104 @@ SA_pres <- cowplot::plot_grid(DK, GER, nrow = 2)
 SA_pres
 ```
 
-Save figure  
-```{r fig.height=4, fig.width=8}
-#save_plot("output/FigureS3.pdf", SA_pres, ncol = 1.5, nrow = 1.5)
+
+How many of the Danish samples with S. aureus rel abund >=0 at t1, had >=0 at t2 or t2 and t3 (recurrence percentage)
+```{r}
+DK_1_pos <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(population == "Denmark", timepoint == "timepoint1", Staphylococcus_aureus>0) %>% pull(Participant_ID) 
+```
+
+How many of the positive ones have a 2nd time point? And how many of these are still positive?
+
+```{r}
+DK_2_pos <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(timepoint == "timepoint2", Participant_ID %in% DK_1_pos)
+
+table(DK_2_pos$Staphylococcus_aureus>0)
 ```
 
 
+```{r}
+112/159 #recurrence percentage (carrier at two time points) 70%
+#That corresponds to
+0.7*75 #53% of general carriers being persistent carriers
+#52.8% If 159 is 75% (carriers at tp1) then 212 is 100%, i.e. 112 (persistent carriers) is 53% of the entire cohort
+112/212
+```
 
 
+How many have both tp 2 and tp 3 and stay positive at all three, i.e. actually persistent
+
+
+```{r}
+DK_23_pos <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(population == "Denmark", Participant_ID %in% DK_1_pos) %>% pivot_wider(id_cols= Participant_ID, names_from = timepoint, values_from = Staphylococcus_aureus) %>% filter(!is.na(timepoint2)) %>% filter(!is.na(timepoint3))
+
+dim(DK_23_pos)
+table(DK_23_pos$timepoint2>0, DK_23_pos$timepoint3>0)
+```
+```{r}
+28/59 #recurrence percentage (carrier at all three time points) 47% of tp1 carriers are also carriers at both tp 2 and tp 3 
+#That correponds to 
+0.47*75 #35% of general carriers being persistent carriers or 28/((59/75)*100)
+```
+
+
+How many of the negative ones have a 2nd time point? And how many of these are still negative?
+
+```{r}
+DK_1_neg <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(population == "Denmark", timepoint == "timepoint1", Staphylococcus_aureus==0) %>% pull(Participant_ID) 
+
+#length(DK_1_neg)
+
+DK_2_neg <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(timepoint == "timepoint2", Participant_ID %in% DK_1_neg)
+
+table(DK_2_neg$Staphylococcus_aureus==0)
+```
+
+58 out of the 232 have a a sample at tp2, 19 of these are still negative, i.e. 19/58 = 33%. 
+
+
+How many have both tp 2 and tp 3 and stay negative at all three, i.e. actually non-carriers
+```{r}
+DK_23_neg <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(population == "Denmark", Participant_ID %in% DK_1_neg) %>% pivot_wider(id_cols= Participant_ID, names_from = timepoint, values_from = Staphylococcus_aureus) %>% filter(!is.na(timepoint2)) %>% filter(!is.na(timepoint3))
+
+#dim(DK_23_neg)
+table(DK_23_neg$timepoint2==0, DK_23_neg$timepoint3==0)
+```
+20 participants who are neg at tp1 have 2 follow-up samples. 4 out of 20 are negative at all three time points (20%). 
+
+Visualize:
+
+```{r fig.height=10, fig.width=5}
+Dk_neg_df <- as.data.frame(t(count_table)) %>% select(Staphylococcus_aureus) %>% 
+  rownames_to_column("Sample") %>% left_join(count_metadata %>% rownames_to_column("Sample")) %>% 
+  filter(population == "Denmark") %>% 
+  pivot_wider(id_cols= Participant_ID, names_from = timepoint, values_from = Staphylococcus_aureus) %>% 
+  filter(!is.na(timepoint1), !is.na(timepoint2), !is.na(timepoint3)) %>% 
+  mutate(tuf_carrier = ifelse(timepoint1 == 0 & timepoint2 == 0 & timepoint3 == 0, "1. non-carrier", ifelse(timepoint1 > 0 & timepoint2 > 0 & timepoint3 > 0, "3. persistent carrier", 
+        ifelse(timepoint1 > 0 & timepoint2 > 0 & timepoint3 ==0,"2.4 intermittent carrier (lost)",
+         ifelse(timepoint1 > 0 & timepoint2 ==0 & timepoint3 ==0,"2.3 intermittent carrier (lost)",                 ifelse(timepoint1 ==0 & timepoint2 ==0 & timepoint3 >0,"2.1 intermittent carrier (gained)",
+         ifelse(timepoint1 ==0 & timepoint2 >0 & timepoint3 >0,"2 intermittent carrier (gained)",
+        ifelse(timepoint1 ==0 & timepoint2 >0 & timepoint3 ==0,"2.2 intermittent carrier (gained and lost)", "2.5 intermittent carrier (lost and gained)")))))))) %>%
+pivot_longer(names_to = "timepoint", values_to = "Staphylococcus_aureus", cols = c(timepoint1, timepoint2, timepoint3))
+
+ggplot(Dk_neg_df, aes(y=Participant_ID,x=timepoint, fill=Staphylococcus_aureus>0)) +
+  geom_tile(width=0.8, height=0.7)+
+  facet_grid(tuf_carrier~., scales = "free", space= "free") +
+  theme(axis.text.y=element_text(size=8), axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "top", strip.text.y = element_text(angle = 0)) +
+  scale_fill_manual(values = c("grey", "#e8702a"))+
+  labs(fill="S. aureus carriage (tuf)")
+```
 
 
 
@@ -398,12 +492,9 @@ testRes_sign2 <- testRes_sign %>% rownames_to_column("Staph1") %>% pivot_longer(
 
 ### Correlation plot
 ```{r fig.height=6, fig.width=9}
-#pdf(file = "output/Figure2D.pdf", width=10, height=7) #uncomment to save file
-
 corrplot(M3, method ="color", type="lower",  is.corr = FALSE,
          p.mat=as.matrix(testRes_sign2),sig.level = c(0.001), pch.cex = 0.65,insig = 'label_sig', pch = c("p<0.001"), pch.col = 'black', col.lim= c(-1,1),col= colorRampPalette(c("#003C30", "white", "#8E0152"))(11), addgrid.col = 'grey')
 
-#dev.off()
 ```
 
 
@@ -548,9 +639,9 @@ levels(count_table3$sCST) = c("sCST1Sa_H", "sCST1Sa_M", "sCST2Sa", "sCST2Sc_H", 
 
 Apart from the 5 most dominant species, other coagulase-negative staphylococci are grouped together as "CoNS", while the remaining species are grouped as "Other_Staph".  
 ```{r}
-temp_vec_CoNS <- count_table %>% rownames_to_column("Species") %>% filter(!Species %in% c("Staphylococcus_aureus", "Staphylococcus_epidermidis", "Staphylococcus_capitis", "Staphylococcus_lugdunensis", "Staphylococcus_delphini", "Staphylococcus_lutrae", "Staphylococcus_pseudintermedius", "Staphylococcus_schleiferi", "Staphylococcus_hominis")) %>% column_to_rownames("Species") %>% summarise_all(.,sum) %>% pivot_longer(names_to = "Sample", values_to = "CoNS", cols = everything()) %>% column_to_rownames("Sample")
+temp_vec_CoNS <- count_table %>% rownames_to_column("Species") %>% filter(!Species %in% c("Staphylococcus_aureus", "Staphylococcus_epidermidis", "Staphylococcus_capitis", "Staphylococcus_lugdunensis", "Staphylococcus_delphini", "Staphylococcus_lutrae", "Staphylococcus_pseudintermedius", "Staphylococcus_schleiferi", "Staphylococcus_hominis")) %>% column_to_rownames("Species") %>% dplyr::summarise_all(.,sum) %>% pivot_longer(names_to = "Sample", values_to = "CoNS", cols = everything()) %>% column_to_rownames("Sample")
 
-temp_vec_non_CoNS <- count_table %>% rownames_to_column("Species") %>% filter(Species %in% c( "Staphylococcus_delphini", "Staphylococcus_lutrae", "Staphylococcus_pseudintermedius", "Staphylococcus_schleiferi")) %>% column_to_rownames("Species") %>% summarise_all(.,sum) %>% pivot_longer(names_to = "Sample", values_to = "Other_staphylococci", cols = everything()) %>% column_to_rownames("Sample")
+temp_vec_non_CoNS <- count_table %>% rownames_to_column("Species") %>% filter(Species %in% c( "Staphylococcus_delphini", "Staphylococcus_lutrae", "Staphylococcus_pseudintermedius", "Staphylococcus_schleiferi")) %>% column_to_rownames("Species") %>% dplyr::summarise_all(.,sum) %>% pivot_longer(names_to = "Sample", values_to = "Other_staphylococci", cols = everything()) %>% column_to_rownames("Sample")
 
 count_table3$CoNS = temp_vec_CoNS$CoNS
 count_table3$Other_Staph = temp_vec_non_CoNS$Other_staphylococci
@@ -558,7 +649,7 @@ count_table3$Other_Staph = temp_vec_non_CoNS$Other_staphylococci
 
 ### Show the mean relative abundance per staphylococcal species/group for each sCST
 ```{r}
-count_summary = count_table3 %>% group_by(sCST) %>% summarise(aureus = mean(Staphylococcus_aureus), epidermidis = mean(Staphylococcus_epidermidis), capitis = mean(Staphylococcus_capitis), lugdunensis = mean(Staphylococcus_lugdunensis), hominis = mean(Staphylococcus_hominis), CoNS = mean(CoNS), Other_Staph = mean(Other_Staph)) %>% mutate_at(2:8, ~(round(., digits = 1)))
+count_summary = count_table3 %>% group_by(sCST) %>% dplyr::summarise(aureus = mean(Staphylococcus_aureus), epidermidis = mean(Staphylococcus_epidermidis), capitis = mean(Staphylococcus_capitis), lugdunensis = mean(Staphylococcus_lugdunensis), hominis = mean(Staphylococcus_hominis), CoNS = mean(CoNS), Other_Staph = mean(Other_Staph)) %>% mutate_at(2:8, ~(round(., digits = 1)))
 count_summary %>% kable() %>% kable_classic()
 ```
 
@@ -626,6 +717,59 @@ heat_count
 ```
 
 
+
+
+
+
+Combine dendrogram and stacked barplot (horizontally)
+```{r fig.height=20, fig.width=10}
+tree <- dendro_data(count_hc2)
+
+data <- cbind(count_melt, x = match(count_melt$Sample, tree$labels$label))
+data <- data %>% left_join(count_metadata %>% select(population) %>% rownames_to_column("Sample"), by="Sample")
+
+colZ <- c(Staph_spec_colors,sCST_colors3, Cohort_colors)
+```
+
+
+```{r fig.height=8, fig.width=18}
+scale <- 0.005
+ph <- ggplot() +
+  
+ geom_segment(
+    data = tree$segments,
+    aes(x = x, y = (-y *scale) -10, xend = xend, yend = (-yend*scale) -10)) + 
+  
+  geom_col(
+    data = data,
+    aes(x = x,
+        y = Count, fill = Species))  +
+  
+  scale_y_reverse()+
+  
+  geom_tile(data=data, aes(x = x, y = -5, fill = sCST, height = 8))+
+ 
+ scale_fill_manual(values=colZ)+
+  
+ geom_text(aes(x=80,y=-5,label=c("sCST1Sa_H (n=175)")), size = 4)+
+ geom_text(aes(x=300,y=-5,label=c("sCST1Sa_M (n=238)")), size = 4)+
+ geom_text(aes(x=500,y=-5,label=c("sCST2Sa (n=180)")), size = 4)+
+ geom_text(aes(x=650,y=-5,label=c("sCST2Sc_H \n(n=61)")), size = 4, color="white")+
+ geom_text(aes(x=750,y=-5,label=c("sCST2Sl (n=143)")), size = 4)+
+ geom_text(aes(x=1000,y=-5,label=c("sCST2Sh (n=339)")), size = 4, color="white")+
+ geom_text(aes(x=1200,y=-5,label=c("sCST2Sc \n(n=136)")), size = 4)+
+ geom_text(aes(x=1550,y=-5,label=c("sCST2Se (n=591)")), size = 4)+
+  
+
+  theme_cowplot()+
+  theme(axis.line.x=element_blank(),axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "top") +
+  labs(x="", y= "Relative abundance [%]")
+
+ph
+```
+
+
+
 # Alpha diversity  
 
 ### Calculate Shannon diversity across different sCSTs
@@ -650,7 +794,6 @@ shannon_diversity = ggplot(data = count_diversity, aes(x = sCST, y = shannon, fi
 shannon_diversity
 ```
 
-
 ### Test alpha diversity measures between sCSTs.  
 This is not trivial, because some data is paired since the longitudinal samples are included. However, let's do a pairwise wilcoxon test as an approximation even though it's not 100% appropriate (therefore result not used in manuscript).    
 ```{r}
@@ -659,17 +802,12 @@ pairwise.wilcox.test(count_diversity$shannon, count_diversity$sCST, p.adjust.met
 
 
 Combine plot  
-```{r fig.height=13, fig.width=8}
+```{r fig.height=10, fig.width=10}
 F4 = plot_grid(NMDS_plot2 + theme(legend.position = "none"), shannon_diversity, labels = c("B","C"),align = "hv",rel_widths = c(3:5),label_size = 19)
-F4.1 = plot_grid (as.ggplot(heat_count), NULL, F4, group_barplot, ncol = 1, rel_heights = c(9,0.15,8,10), labels = c("A","","","D"),label_size = 19)
+#F4.1 = plot_grid (as.ggplot(heat_count), NULL, F4, group_barplot, ncol = 1, rel_heights = c(9,0.15,8,10), labels = c("A","","","D"),label_size = 19)
+F4.1 = plot_grid (ph, NULL, F4, ncol = 1, rel_heights = c(12,0.15,8,10), labels = c("A","",""),label_size = 19)
 F4.1
 ```
-
-Save figure  
-```{r}
-#save_plot("output/Figure3.pdf", F4.1, ncol = 2, nrow = 3.7)
-```
-
 
 
 
@@ -705,11 +843,6 @@ time3 = ggplot(timepoint3_melt, aes(x = variable, stratum = value, alluvium = Pa
   theme_cowplot() +
   theme(legend.position = "bottom")
 time3
-```
-
-Save figure
-```{r}
-#save_plot("output/Figure5A.pdf",time3,ncol = 0.9, nrow = 1.8)
 ```
 
 
@@ -765,14 +898,6 @@ plotmat(as.matrix(t(markov_12_round)), pos = c(2), lwd = 1.5, self.lwd = 1.5,box
 ```
 
 
-Save figure
-```{r}
-#pdf(file = "output/Fig5B_Markov3.pdf")
-#plotmat(as.matrix(t(markov_12_round)), pos = c(2), lwd = 1.5, self.lwd = 1.5,box.lwd = 1, cex.txt = 0.7, box.size = 0.1, box.type = "circle", box.prop = 1, box.col = c("#e68502", "#82a1c1"), arr.length = 0.15, arr.width = 0.15, self.cex = 0.54, self.shifty = c(0,0), self.shiftx = c(-0.14,0.14), shadow.size=0, arr.type = "triangle")
-#dev.off()
-```
-
-
 ### Visualize transitions between sCST1, sCST2_Sa and other sCST2
 ```{r fig.height=5, fig.width=5}
 #Make a specific df that combines the sCSTs into those larger categories
@@ -803,12 +928,6 @@ markov_aureus_round %>% kable() %>% kable_classic()
 plotmat(as.matrix(t(markov_aureus_round)), pos = c(1,2), lwd = 1.5, self.lwd= 1.5, box.lwd = 1, cex.txt = 0.7, box.size = 0.1, box.type = "circle", box.prop = 1, box.col = c("#e68502","#fad77b", "#82a1c1"),  arr.length = 0.15, arr.width = 0.15, self.cex = 0.54, self.shifty = c(0.14,0,0), self.shiftx = c(0,-0.14,0.14), shadow.size=0, arr.type = "triangle")
 ```
 
-Save figure
-```{r}
-#pdf(file = "output/Fig5C_Markov3.pdf")
-#plotmat(as.matrix(t(markov_aureus_round)), pos = c(1,2), lwd = 1.5, self.lwd= 1.5, box.lwd = 1, cex.txt = 0.7, box.size = 0.1, box.type = "circle", box.prop = 1, box.col = c("#e68502","#fad77b", "#82a1c1"),  arr.length = 0.15, arr.width = 0.15, self.cex = 0.54, self.shifty = c(0.14,0,0), self.shiftx = c(0,-0.14,0.14), shadow.size=0, arr.type = "triangle")
-#dev.off()
-```
 
 
 ### Visualize transitions for S.aureus (sCST1Sa_H, sCST1Sa_M, sCST2Sa) vs sCST2Sl vs sCST2Se vs capitis/mixed (sCST2Sc_H, sCST2Sc, sCST2Sh)
@@ -842,13 +961,6 @@ plotmat(as.matrix(t(markov_Cons_round)), pos = c(2,2), lwd = 1.5, self.lwd = 1.5
 ```
 
 
-Save figure
-```{r}
-#pdf(file = "output/Fig5D_Markov3.pdf")
-#plotmat(as.matrix(t(markov_Cons_round)), pos = c(2,2), lwd = 1.5, self.lwd = 1.5, box.lwd = 1, cex.txt = 0.7, box.size = 0.1, box.type = "circle", box.prop = 1, box.col = c("#f2ad00","#ac8cae","#82a1c1", "#a7bf90"), arr.length = 0.15, arr.width = 0.15, self.cex = 0.54, self.shifty = c(0,0,0,0), self.shiftx = c(-0.14,0.14,-0.14, 0.14), shadow.size=0, box.cex = 0.9, arr.type = "triangle")
-#dev.off()
-```
-
 
 ## Time between sampling time points  
 Here, we calculate the average number of days between the sampling time points.  
@@ -872,7 +984,7 @@ count_metadata_sample_time_long <- count_metadata_sample_time %>%
   pivot_longer(cols = c(time1, time2), names_to = "time_dist", values_to = "days_difference") %>% 
   filter(!is.na(days_difference))
 
-count_metadata_sample_time_long %>% group_by(time_dist) %>% summarise(mean = mean(days_difference), median = median(days_difference), min = min(days_difference), max = max(days_difference)) %>% kable() %>% kable_classic()
+count_metadata_sample_time_long %>% group_by(time_dist) %>% dplyr::summarise(mean = mean(days_difference), median = median(days_difference), min = min(days_difference), max = max(days_difference)) %>% kable() %>% kable_classic()
 ```
 
 
@@ -891,12 +1003,6 @@ average_plot = ggplot(data = count_metadata_sample_time_long, aes(x = time_dist,
   theme(legend.position = "")
 average_plot
 ```
-
-Save figure
-```{r}
-#save_plot("output/FigureS5.pdf",average_plot,ncol = 0.9, nrow = 1.2)
-```
-
 
 
 
@@ -927,7 +1033,7 @@ dim(count_metadata2_abs)
 
 ## Median staphylococcal relative abundance in the nasal microbiota per sCST  
 ```{r}
-staph_median = count_metadata2_abs  %>% group_by(sCST) %>% summarise(percentage_median = median(staph_percentage))
+staph_median = count_metadata2_abs  %>% group_by(sCST) %>% dplyr::summarise(percentage_median = median(staph_percentage))
 
 staph_median %>% kable() %>% kable_classic()
 ```
@@ -935,7 +1041,7 @@ staph_median %>% kable() %>% kable_classic()
 
 ```{r fig.height=5, fig.width=10}
 #Add sCST count
-CST_count <- count_metadata2_abs  %>% group_by(sCST) %>% summarise(count=n())
+CST_count <- count_metadata2_abs  %>% group_by(sCST) %>% dplyr::summarise(count=n())
 
 staph_percentage_plot = ggplot(count_metadata2_abs, aes(x = sCST, y = staph_percentage)) +
   geom_boxplot(aes(fill = sCST), alpha = 1, outlier.alpha = 0) +
@@ -978,7 +1084,7 @@ count_metadata2_abs2 <- count_metadata2_abs %>% rownames_to_column("Sample") %>%
 ### Obtain abundance medians for each sCST  
 ```{r}
 count_metadata2_abs2_median = count_metadata2_abs2 %>% group_by(sCST) %>% 
-  summarise(
+  dplyr::summarise(
     "Absolute bacterial \nabundance (*10^5)" = paste(round(median(per_swab/1e+05), digits = 2), "(IQR:",round(quantile(per_swab/1e+05,probs = 0.25),1),"-", round(quantile(per_swab/1e+05,probs = 0.75),1),")"), 
     "Absolute staphylococcal \nabundance (*10^5)" = paste(round(median(staph_absolute/1e+05), digits = 2), "(IQR:",round(quantile(staph_absolute/1e+05,probs = 0.25),1),"-", round(quantile(staph_absolute/1e+05,probs = 0.75),1),")"), 
     "Absolute S. aureus \nabundance" = paste(round(median(aureus_absolute), digits = 0), "(IQR:",round(quantile(aureus_absolute,probs = 0.25),0),"-", round(quantile(aureus_absolute,probs = 0.75),0),")"), 
@@ -988,24 +1094,40 @@ count_metadata2_abs2_median %>% kable() %>% kable_classic()
 ```
 
 ### Plot absolute abundances (qPCR data)
+
 ```{r fig.height=5, fig.width=12}
 count_metadata2_abs2_melt = melt(count_metadata2_abs2 %>% select(sCST, per_swab, staph_absolute, aureus_absolute, epidermidis_absolute))
 count_metadata2_abs2_melt = count_metadata2_abs2_melt[which(count_metadata2_abs2_melt$value>0),]
 
-qPCR_plot = ggplot(count_metadata2_abs2_melt, aes(x = sCST, y = value)) +
-  geom_boxplot(aes(fill = variable), alpha = 1, outlier.alpha = 1, position = position_dodge2(width = 0.5)) +
-  scale_fill_manual(name = "qPCR",
+count_metadata2_abs2_melt_medians <- count_metadata2_abs2_melt %>% group_by(sCST, variable) %>% dplyr::summarise(median=median(value))
+```
+
+
+```{r fig.height=5, fig.width=12}
+qPCR_plot3 = ggplot() +
+  
+  geom_bar(data=count_metadata2_abs2_melt_medians %>% filter(variable %in% c("per_swab")), aes(x=sCST, y=median, fill=variable), stat="identity", width=0.70, position = position_nudge(x = -0.15)) +
+  
+   geom_bar(data=count_metadata2_abs2_melt_medians %>% filter(variable %in% c("staph_absolute")), aes(x=sCST, y=median, fill=variable), stat="identity", width=0.65, position = position_nudge(x = -0.075)) +
+
+   geom_bar(data=count_metadata2_abs2_melt_medians %>% filter(variable %in% c("aureus_absolute", "epidermidis_absolute")), aes(x=sCST, y=median, fill=variable), stat="identity", width=0.6) +
+  
+scale_y_continuous("median 16S rRNA gene copies per swab") +
+  
+ scale_fill_manual(name = "qPCR",
                     label = c(bquote(atop("Bacterial", " absolute abundance")),
                               bquote(atop("Staphylococcal", " absolute abundance")),
                               bquote(atop(italic("S. aureus")," absolute abundance"),),
                               bquote(atop(italic("S. epidermidis"), " absolute abundance"))),
-                    values = c("#595959","grey","#f2ad00","#82a1c1")) +
+                    values = c("grey","#595959","#f2ad00","#82a1c1")) +
+  
+
   theme_cowplot()+
-  scale_y_continuous(expand = c(0,0.5), trans = "log10", name = "16S rRNA gene copies per swab", breaks = c(10,1000,100000,10000000,1000000000),labels = trans_format("log10", math_format(10^.x))) +
-  theme(legend.position = "bottom", legend.key.size = unit(1.2, "cm"),legend.text.align = 0,axis.title.x = element_blank()) +
-  annotation_logticks(sides = "l") +
+
+  theme(legend.position = "right", legend.key.size = unit(1.2, "cm"),legend.text.align = 0,axis.title.x = element_blank()) +
+ ylab("median 16S rRNA gene copies per swab") +
   background_grid()
-qPCR_plot
+qPCR_plot3
 ```
 
 ### Statistics on absolute bacterial abundance  
@@ -1037,17 +1159,109 @@ pairwise.wilcox.test(count_metadata2_abs2$epidermidis_absolute, count_metadata2_
 ```
 
 #### Combined plots of staphylococcal percentage and absolute abundances (qPCR)  
-```{r fig.height=10, fig.width=11}
-qPCR_grid = plot_grid(qPCR_plot,staph_percentage_plot,ncol = 1, align = "v",rel_heights = c(5,4), labels = "AUTO",label_size = 16)
+```{r fig.height=10, fig.width=15}
+qPCR_grid = plot_grid(qPCR_plot3,staph_percentage_plot,ncol = 1, align = "v",rel_heights = c(5,4), labels = "AUTO",label_size = 16)
 qPCR_grid
 ```
 
-Save figure
+
+
+## Carrier status based on S. aureus absolute abundance in DK (similar to Figure S3)
 ```{r}
-#save_plot("output/Figure7.pdf", qPCR_grid,nrow = 2.4,ncol = 1.8)
+df_aureus_abs <- count_metadata2_abs2 %>%
+  select(Participant_ID, timepoint, data_type, aureus_absolute, carrier)
+```
+
+Fewer samples since not all have qPCR data.  
+```{r}
+prev_table_abs <- df_aureus_abs %>%  filter(data_type == "cross sectional") %>% 
+  dplyr::summarise(S.aureus_absent_n = matrixStats::count(aureus_absolute == 0) , S.aureus_present_n= matrixStats::count(aureus_absolute>0)) %>% 
+  dplyr::summarise("S.aureus_present >0" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
+            "S.aureus_absent (0)" = paste0(S.aureus_absent_n, " (", round(S.aureus_absent_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)")) 
+
+prev_table_abs %>%
+  kable() %>% kable_classic()
 ```
 
 
+
+
+
+Which S. aureus absolute abundance would be required to detect 43% of samples as positive? (correponding to culture-positive prevalence) 
+```{r}
+round2 = function(x, n) {
+  posneg = sign(x)
+  z = abs(x)*10^n
+  z = z + 0.5 + sqrt(.Machine$double.eps)
+  z = trunc(z)
+  z = z/10^n
+  z*posneg
+}
+
+# Calculate exact abs abund for 43%
+
+n <- round2((length(unique(df_aureus_abs$Participant_ID))/100)*43,0) #364 persons correspond to 43% of the cohort
+df_aureus_abs_sorted_decr <- df_aureus_abs %>% arrange(-aureus_absolute) %>% rownames_to_column("Sample")
+abd_43 <- df_aureus_abs_sorted_decr[n,"aureus_absolute"]
+abd_43
+
+prev_table_abs_c <- df_aureus_abs %>%  filter(data_type == "cross sectional") %>% 
+  dplyr::summarise(S.aureus_absent_n = matrixStats::count(aureus_absolute <abd_43) , S.aureus_present_n= matrixStats::count(aureus_absolute >=abd_43)) %>% 
+  dplyr::summarise("S.aureus_present >=1,671" = paste0(S.aureus_present_n, " (", round(S.aureus_present_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)"),
+            "S.aureus < 1,671" = paste0(S.aureus_absent_n, " (", round(S.aureus_absent_n/sum(S.aureus_absent_n, S.aureus_present_n)*100),"%)")) 
+
+prev_table_abs_c %>%
+  kable() %>% kable_classic()
+```
+
+
+```{r fig.height=6, fig.width=8}
+df_aureus_abs_sorted <- df_aureus_abs %>% arrange(aureus_absolute) %>% rownames_to_column("Sample") 
+```
+
+```{r fig.height=5, fig.width=10}
+#need to take out everything below 1, otherwise negative log10
+abs_cul <- ggplot(df_aureus_abs_sorted %>% filter(aureus_absolute>1), aes(x=Sample, y=aureus_absolute, fill=carrier)) +
+geom_bar(position = "stack", stat = "identity", width = 1) +
+scale_fill_manual(values=c("darkgrey", "#1f78b4")) +
+scale_x_discrete(limits=df_aureus_abs_sorted$Sample) +  #This way still all samples included
+theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), legend.position = "none") + 
+scale_y_continuous(expand = c(0,0.5), trans = "log10", name = "16S rRNA gene copies per swab", breaks = c(10,1000,100000,10000000,1000000000),labels = trans_format("log10", math_format(10^.x))) +
+  theme(legend.position = "bottom", legend.key.size = unit(1.2, "cm"),legend.text.align = 0) +
+  annotation_logticks(sides = "l") +
+  background_grid() + 
+#geom_hline(yintercept = 10, color="red", size=0.5) + 
+geom_vline(xintercept = df_aureus_abs_sorted$Sample[df_aureus_abs_sorted$aureus_absolute >0][1], size=0.5) + 
+geom_vline(xintercept = df_aureus_abs_sorted$Sample[df_aureus_abs_sorted$aureus_absolute >=1700][1], size=0.5) + 
+annotate(x= df_aureus_abs_sorted$Sample[df_aureus_abs_sorted$aureus_absolute >0][280], y= 10, label=paste0("S. aureus present >0 16S rRNA gene copies per swab:", "n=", prev_table_abs$`S.aureus_present >0`), "label") +
+annotate(x= df_aureus_abs_sorted$Sample[df_aureus_abs_sorted$aureus_absolute >=abd_43][200], y= 900, label=paste0("S. aureus present >=1,671 \n16S rRNA gene copies per swab: \n", "n=", prev_table_abs_c$`S.aureus_present >=1,671`), "label")  +
+labs (x= "Study participants", title = "Estimated absolute abundance of S. aureus", fill="carrier acc. to culture")
+
+abs_cul
+```
+
+
+How well are carrier status and S. aureus copy number correlated? 
+
+Testing culture positive vs negative against each other: 
+```{r}
+wil <- pairwise.wilcox.test(df_aureus_abs_sorted$aureus_absolute, df_aureus_abs_sorted$carrier,paired=FALSE, p.adjust.method = "none")
+wil
+```
+Calculate effect size
+```{r}
+wilcoxonR(df_aureus_abs_sorted$aureus_absolute, df_aureus_abs_sorted$carrier)
+```
+
+Median abs S. aureus abundance in Carriers vs non-carriers
+```{r}
+count_metadata2_abs2_median = count_metadata2_abs2 %>% group_by(carrier) %>% 
+  dplyr::summarise(
+    "Absolute S. aureus \nabundance" = paste(round(median(aureus_absolute), digits = 0), "(IQR:",round(quantile(aureus_absolute,probs = 0.25),0),"-", round(quantile(aureus_absolute,probs = 0.75),0),")"))
+
+count_metadata2_abs2_median %>% kable() %>% kable_classic()
+```
+  
   
 
 # Analysis of association between bacterial CSTs and sCSTs  
@@ -1095,55 +1309,6 @@ This shows that there is a significant difference between sCSTs with regards to 
 chisq.test(table(count_na_removed_CS$sCST, count_na_removed_CS$bacterial_CST))
 ```
 
-### Plot percentage of bacterial CSTs within each sCST  
-```{r fig.height=5, fig.width=12}
-group_sCST = ggplot(data = count_na_tally %>% mutate(bacterial_CST = as.factor(bacterial_CST)), aes(x = sCST, y = n, fill = bacterial_CST)) +
-  geom_bar(position = "fill", stat = "identity") +
-  scale_fill_manual(values= CST_colors, labels = c(
-    "CST1a - S. aureus (high density)",
-    "CST1b - S. aureus (medium density)",
-    "CST2  -  Enterobacteriaceae",
-    "CST3  -  S. epidermidis",
-    "CST4  -  Cutibacterium",
-    "CST5a - Corynebacterium accolens",
-    "CST5b - Corynebacterium segmentosum",
-    "CST6a - Moraxella catarrhalis/\n              Moraxella nonliquefaciens",
-    "CST6b - Moraxella nonliquefaciens",
-    "CST7  -  Dolosigranulum pigrum/\n              Corynebacterium pseudodiphteriticum",
-    "CST8  -  Haemophilus",
-    "CST9a - Finegoldia/Peptoniphilus/\n              Anaerococcus",
-    "CST9b - Bacillus")) +
-  theme_cowplot() +
-  ylab("Percentage of samples") +
-  xlab("") +
-  scale_y_continuous(expand = c(0,0), labels = scales::label_percent()) +
-  theme(legend.position = "right")
-group_sCST
-```
-
-### Plot percentage of sCSTs within each bacterial CST 
-```{r fig.height=5, fig.width=12}
-group_CST = ggplot(data = count_na_tally, aes(x = bacterial_CST, y = n, fill = sCST)) +
-  geom_bar(position = "fill", stat = "identity") +
-  scale_fill_manual(values=sCST_colors) +
-  theme_cowplot() +
-  ylab("Percentage of samples") +
-  xlab("") +
-  scale_y_continuous(expand = c(0,0), labels = scales::label_percent()) +
-  theme(legend.position = "right")
-group_CST
-```
-
-## Combine plots
-```{r fig.height=10, fig.width=12}
-h1 = plot_grid(group_CST, group_sCST, align = "hv", ncol = 1, labels = "AUTO", label_size = 20)
-h1
-```
-
-Save figure
-```{r}
-#save_plot("output/Figure6.pdf", h1, nrow = 2, ncol = 1.9)
-```
 
 
 ## Bacterial CSTs of excluded samples
@@ -1180,6 +1345,54 @@ removed_summary = count_temp_removed %>% group_by(bacterial_CST) %>%
 removed_summary %>% kable() %>% kable_classic()
 ```
 
+
+## Mosaic plot
+```{r fig.height=10, fig.width=10}
+# Create a mosaic plot using vcd
+# On pooled sCST data with all CSTs
+count_na_removed_CS_pooled <- count_na_removed_CS %>% 
+  mutate(sCST_pooled =case_when(
+     sCST %in% c("sCST1Sa_H","sCST1Sa_M") ~"1.sCST1",
+     sCST == "sCST2Sa" ~"2.sCST2Sa",
+     sCST == "sCST2Se" ~"3.sCST2Se",
+    .default = "4.sCST2 (other)"))
+
+mosaic(~ bacterial_CST + sCST_pooled,data=count_na_removed_CS_pooled, 
+       shade = TRUE, 
+       legend = TRUE,
+       rot_labels=c(45,0),
+       offset_label =c(0,0),
+       zero_size=0,
+       direction="v",
+       labeling=labeling_residuals,
+       gp=shading_hcl)
+```
+
+```{r}
+table(count_na_removed_CS$sCST)
+table(count_na_removed_CS$bacterial_CST)
+table(count_na_removed_CS$sCST, count_na_removed_CS$bacterial_CST)
+```
+
+
+Keep any CSTs with any correlation < -2.5 or >2.5 and n=>30 and pool CoNS sCSTs
+
+```{r fig.height=10, fig.width=10}
+mosaic(~ bacterial_CST + sCST_pooled,data=count_na_removed_CS_pooled, 
+       shade = TRUE, 
+       legend = TRUE,
+       rot_labels=c(0,0),
+       offset_label =c(0,0),
+       zero_size=0,
+       direction="v",
+       labeling=labeling_residuals,
+       subset=bacterial_CST %in% c("CST1a", "CST3", "CST4", "CST5a", "CST7", "CST9a"),
+       gp=shading_hcl)
+
+```
+
+
+
 #### Plot bacterial CST assignments of the samples that have been excluded due to insufficient read count.  
 ```{r fig.height=4, fig.width=12}
 removed_CST = ggplot(removed_summary, aes(x = bacterial_CST, y = `percentage 
@@ -1208,12 +1421,6 @@ removed_CST = ggplot(removed_summary, aes(x = bacterial_CST, y = `percentage
 removed_CST
 ```
 
-Save figure
-```{r}
-#save_plot("output/FigureS6.pdf", removed_CST,nrow = 1,ncol = 1.8)
-```
-
-
 
 Determine the number of true staphylococci negatives - i.e. which of the 169 samples with insufficient *tuf* read count also have no *Staphylococcus* genus reads in the 16S data?   
 ```{r}
@@ -1223,75 +1430,10 @@ count_meta_removed %>% filter(staph_percentage == 0) %>% dplyr::count() %>%  dpl
 ```
 
 
+
 # Demographic factors    
 
 ## Population 
-
-### Distribution of populations (DK and GER) within the two major groups (sCST1 and sCST2)   
-Test whether the two major sCST groups differ with regards to distribution of populations   
-```{r}
-meta_pop <- count_metadata2 %>% mutate(sCST_main = ifelse(sCST %in% c("sCST1Sa_H", "sCST1Sa_M"), "sCST1", "sCST2")) 
-
-chisq.test(table(meta_pop$population,meta_pop$sCST_main))
-```
-
-#### Calculate percentages and 95% CI of population distribution within the two major sCST groups  
-```{r}
-meta_pop <- meta_pop %>% group_by(population, sCST_main) %>% tally() %>% group_by(population) %>% mutate(total_per_population = sum(n), perc = round((n/total_per_population)*100,1))
-
-
-round2 = function(x, n) {
-  posneg = sign(x)
-  z = abs(x)*10^n
-  z = z + 0.5 + sqrt(.Machine$double.eps)
-  z = trunc(z)
-  z = z/10^n
-  z*posneg
-}
-
-meta_pop$row.no<-1:nrow(meta_pop)
-df_ci<-data.frame()
-n<-1:nrow(meta_pop)
-for(i in n){
-  ci_low<-round2(binom.test(meta_pop$n[i],meta_pop$total_per_population[i])$conf.int[1]*100,1)
-  ci_hi<-round2(binom.test(meta_pop$n[i],meta_pop$total_per_population[i])$conf.int[2]*100,1)
-  row.no<-i
-  ci_com<-data.frame(row.no,ci_low,ci_hi)
-  df_ci<-rbind(df_ci,ci_com)
-}
-
-meta_pop %>% 
-  left_join(df_ci,by="row.no") %>%
-  select(-row.no) %>% kable() %>% kable_classic()
-```
-
-
-
-#### Calculate percentage of Danish and German samples in each sCST normalized for a differing number of samples in each of the two populations    
-```{r fig.height=5, fig.width=9, warning=FALSE}
-metadata_tally = na.exclude(count_metadata2 %>% group_by(sCST, population) %>% tally())
-metadata_tally = metadata_tally %>% group_by(population) %>% mutate(normalise_n = n/sum(n)) %>% group_by(sCST, population) %>% summarise(normalise_n = sum(normalise_n)) %>% mutate(percentage = round(normalise_n/sum(normalise_n)*100, digit = 1))
-metadata_tally %>% kable() %>% kable_classic()
-```
-
-#### Test whether the sCSTs differ with regards to distribution of populations  
-```{r fig.height=5, fig.width=9, warning=FALSE}
-chisq.test(count_metadata2$sCST,count_metadata2$population)
-```
-
-### Plot distribution of populations in the sCSTs   
-```{r fig.height=5, fig.width=12, warning=FALSE}
-population_plot = ggplot(metadata_tally, aes(x = sCST, y = normalise_n, fill = population)) +
-  geom_bar(position = "fill", stat = "identity") +
-  geom_hline(yintercept = c(0.5), linetype ="dashed") +
-  scale_fill_manual(values = Cohort_colors) + 
-  scale_y_continuous(name = "Percentage of samples", expand = c(0,0), labels = scales::label_percent()) +
-  theme_cowplot() +
-  theme(axis.title.x = element_blank())
-population_plot
-```
-
-
 
 ## Sex  
 
@@ -1351,33 +1493,23 @@ Calculate percentage of men and women in each sCST in the two populations normal
 ```{r fig.height=7, fig.width=12, warning=FALSE}
 count_metadata2$sex <- factor(count_metadata2$sex, levels= c("Male", "Female"))
 
-metadata_tally = na.exclude(count_metadata2 %>% group_by(population, sCST, sex) %>% tally())
-metadata_tally = metadata_tally %>% group_by(population,sex) %>% mutate(normalise_n = n/sum(n)) %>% group_by(population, sCST) %>% mutate(percentage = round(normalise_n/sum(normalise_n)*100, digit =1))
+metadata_tally = na.exclude(count_metadata2 %>% group_by(sCST, sex) %>% tally())
+metadata_tally = metadata_tally %>% group_by(sex) %>% mutate(normalise_n = n/sum(n)) %>% group_by(sCST) %>% mutate(percentage = round(normalise_n/sum(normalise_n)*100, digit =1))
 metadata_tally %>% kable() %>% kable_classic()
 ```
 
 
-### Plot distribution of sexes in the sCSTs in the two populations  
-```{r fig.height=7, fig.width=12, warning=FALSE}
+### Plot distribution of sexes in the sCSTs in the two populations (pooled)
+```{r fig.height=4, fig.width=12, warning=FALSE}
 sex_plot = ggplot(metadata_tally, aes(x = sCST, y = normalise_n, fill = sex)) +
   geom_bar(position = "fill", stat = "identity") +
-  facet_wrap(~population,ncol = 1) +
+ 
   geom_hline(yintercept = 0.5, linetype ="dashed") +
   scale_fill_manual(name = "Sex", values = c(Male = "#446454", Female = "#a89985")) + 
   scale_y_continuous(name = "Percentage of samples",expand = c(0,0), labels = scales::label_percent()) +
   theme_cowplot() +
   theme(axis.title.x = element_blank())
 sex_plot
-```
-
-
-
-
-Combine plots and save figure. 
-```{r fig.height=14, fig.width=12, warning=FALSE}
-meta1_grid = plot_grid(population_plot, sex_plot,ncol = 1, align = "hv", labels = "AUTO", label_size = 18,rel_heights = c(1,2))
-meta1_grid
-#save_plot("output/Figure4.pdf", meta1_grid,ncol = 1.4,nrow = 2.1)
 ```
 
 
@@ -1402,12 +1534,6 @@ population_dist = ggplot(metadata_tally, aes(x = age, y = n, fill = sex)) +
 population_dist
 ```
 
-Save figure
-```{r}
-#save_plot("output/FigureS2.pdf", population_dist, ncol = 1.3, nrow = 1.4)
-```
-
-
 
 ### Calculate median age group per cohort and test whether the Danish and German cohorts are different with regards to participants' age.  
 ```{r}
@@ -1422,7 +1548,7 @@ count_metadata_test_age <- count_metadata2 %>% mutate(age_group=case_when(
      age =="55-59"~8,
      age =="≥ 60"~9))
 
-count_metadata_test_age %>% group_by(population) %>% summarise(median(age_group, na.rm = T), min(age_group, na.rm = T), max(age_group, na.rm = T)) %>% kable() %>% kable_classic()
+count_metadata_test_age %>% group_by(population) %>% dplyr::summarise(median(age_group, na.rm = T), min(age_group, na.rm = T), max(age_group, na.rm = T)) %>% kable() %>% kable_classic()
 
 chisq.test(table(count_metadata2$population,count_metadata2$age))
 ```
@@ -1509,18 +1635,6 @@ chisq.test(table(count_metadata2$population,count_metadata2$smoker))
 ```
 
 
-Combine and save figure
-```{r fig.height=12, fig.width=12, warning=FALSE}
-smoking_age_plot <- plot_grid(age_plot_alt2,smoker_plot,align = "hv",ncol = 1,labels = "AUTO",label_size = 18)
-
-smoking_age_plot
-
-#save_plot("output/FigureS4.pdf",smoking_age_plot,nrow = 2, ncol = 1.6)
-```
-
-
-
-
 
 
 # Culturing results for S. aureus (Danish cross-sectional samples)  
@@ -1538,6 +1652,11 @@ metadata_tally %>% group_by(sCST) %>% mutate(percentage = round(n/sum(n)*100,dig
 
 chisq.test(table(count_metadata2_DK$sCST,count_metadata2_DK$carrier))
 ```
+How many carriers overall 
+```{r}
+table(count_metadata2_DK$carrier)
+```
+
 
 
 ```{r fig.height=5, fig.width=12, warning=FALSE}
@@ -1575,9 +1694,3 @@ carrier_plot2 = ggplot(metadata_tally, aes(x = sCST, y = n, fill = quantity)) +
 carrier_plot2
 ```
 
-Combine plot and save figure
-```{r fig.height=10, fig.width=12}
-carrier_number = plot_grid(carrier_plot, carrier_plot2, align = "hv", ncol = 1, labels = "AUTO")
-carrier_number
-#save_plot("output/FigureS7.pdf", carrier_number,nrow = 1.7, ncol = 2)
-```
